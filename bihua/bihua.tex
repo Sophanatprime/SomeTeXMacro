@@ -1,0 +1,550 @@
+%% license：MIT
+%% author：雾月，https://github.com/Sophanatprime
+
+%% bihua data: https://github.com/skishore/makemeahanzi and https://github.com/chanind/hanzi-writer-data
+\makeatletter
+\ExplSyntaxOn
+
+\msg_new:nnn { bihua } { bihua-not-exist }
+  { The~bihua~information~of~`#1'~does~not~exist~or~unloaded. }
+\msg_new:nnn { bihua } { path-cmd-not-exist }
+  { The~svg~path~cmd~`#1'~does~not~exist. }
+\dim_new:N \bihua@curr@x
+\dim_new:N \bihua@curr@y
+\dim_new:N \bihua@temp@x
+\dim_new:N \bihua@temp@y
+\dim_const:Nn \BHU { 0.01pt }
+\cs_new_protected_nopar:Npn \bihua_set_unit:n { \dim_set:Nn \BHU }
+\cs_new_protected_nopar:Npn \bihua_set_width:n #1
+  { \dim_set:Nn \BHU { (#1+0pt)/1024 } }
+\cs_new_protected:Npn \__bihua_set_curr_point:nn #1#2
+  { 
+    \tl_if_empty:nF {#1} { \dim_set:Nn \bihua@curr@x { #1\BHU } }
+    \tl_if_empty:nF {#2} { \dim_set:Nn \bihua@curr@y { #2\BHU } }
+  }
+\cs_new_protected:Npn \__bihua_set_temp_point:nn #1#2
+  { 
+    \tl_if_empty:nF {#1} { \dim_set:Nn \bihua@temp@x { #1\BHU } }
+    \tl_if_empty:nF {#2} { \dim_set:Nn \bihua@temp@y { #2\BHU } }
+  }
+
+\cs_new_protected_nopar:Npn \bihua_svg_path:n #1
+  {
+    \use:nnnn 
+      { \exp_last_unbraced:Nf \__bihua_svg_path_aux:w \tl_trim_spaces:n {#1} }
+      { ~ }
+      { \q_recursion_tail }
+      { ~ }
+      \q_recursion_stop
+    \tex_ignorespaces:D
+  }
+\cs_new_protected_nopar:Npn \bihua_svg_path:N #1
+  {
+    \use:nnnn 
+      { \exp_last_unbraced:Nf \__bihua_svg_path_aux:w { \tl_trim_spaces:o #1 } }
+      { ~ }
+      { \q_recursion_tail }
+      { ~ }
+      \q_recursion_stop
+    \tex_ignorespaces:D
+  }
+\cs_generate_variant:Nn \bihua_svg_path:N { c }
+\cs_new:Npn \__bihua_svg_path_aux:w #1~
+  {
+    \quark_if_recursion_tail_stop:N #1
+    \cs_if_exist_use:cF { __bihua_svg_path_cmd_ #1 :w }
+      {
+        \msg_error:nnn { bihua } {#1} { path-cmd-not-exist }
+        \use_none_delimit_by_q_recursion_stop:w
+      }
+  }
+\cs_new:Npn \__bihua_svg_path_cmd_M:w #1~#2~
+  { 
+    \draw_path_moveto:n { #1\BHU , #2\BHU } 
+    \__bihua_set_curr_point:nn {#1} {#2}
+    \__bihua_svg_path_aux:w
+  }
+\cs_new:Npn \__bihua_svg_path_cmd_L:w #1~#2~
+  { 
+    \draw_path_lineto:n { #1\BHU , #2\BHU } 
+    \__bihua_set_curr_point:nn {#1} {#2}
+    \__bihua_svg_path_aux:w
+  }
+\cs_new:Npn \__bihua_svg_path_cmd_H:w #1~
+  {
+    \draw_path_lineto:n { #1\BHU , \bihua@curr@y }
+    \__bihua_set_curr_point:nn {#1} { }
+    \__bihua_svg_path_aux:w
+  }
+\cs_new:Npn \__bihua_svg_path_cmd_V:w #1~
+  {
+    \draw_path_lineto:n { \bihua@curr@x , #1\BHU }
+    \__bihua_set_curr_point:nn { } {#1}
+    \__bihua_svg_path_aux:w
+  }
+\cs_new:Npn \__bihua_svg_path_cmd_A:w #1~#2~#3~#4~#5~#6~#7~
+  {
+    %TODO:
+    \group_begin:
+
+    \group_end:
+    \__bihua_svg_path_aux:w
+  }
+\cs_new:Npn \__bihua_svg_path_cmd_Q:w #1~#2~#3~#4~
+  {
+    \draw_path_curveto:nn 
+      { #1\BHU , #2\BHU } 
+      { #3\BHU , #4\BHU }
+    \__bihua_set_temp_point:nn {#1} {#2}
+    \__bihua_set_curr_point:nn {#3} {#4}
+    \__bihua_svg_path_aux:w
+  }
+\cs_new:Npn \__bihua_svg_path_cmd_T:w #1~#2~
+  {
+    \draw_path_curveto:nn 
+      { 2\bihua@curr@x - \bihua@temp@x , 2\bihua@curr@y - \bihua@temp@y } 
+      { #1\BHU , #2\BHU }
+    \__bihua_set_curr_point:nn {#1} {#2}
+    \__bihua_svg_path_aux:w
+  }
+\cs_new:Npn \__bihua_svg_path_cmd_C:w #1~#2~#3~#4~#5~#6~
+  {
+    \draw_path_curveto:nnn 
+      { #1\BHU , #2\BHU }
+      { #3\BHU , #4\BHU }
+      { #5\BHU , #6\BHU }
+    \__bihua_set_temp_point:nn {#3} {#4}
+    \__bihua_set_curr_point:nn {#5} {#6}
+    \__bihua_svg_path_aux:w
+  }
+\cs_new:Npn \__bihua_svg_path_cmd_S:w #1~#2~#3~#4~
+  {
+    \draw_path_curveto:nnn 
+      { 2\bihua@curr@x - \bihua@temp@x , 2\bihua@curr@y - \bihua@temp@y }
+      { #1\BHU , #2\BHU }
+      { #3\BHU , #4\BHU }
+    \__bihua_set_curr_point:nn {#1} {#2}
+    \__bihua_svg_path_aux:w
+  }
+\cs_new:Npn \__bihua_svg_path_cmd_Z:w 
+  { 
+    \draw_path_close: 
+    \__bihua_svg_path_aux:w
+  }
+
+\cs_new_nopar:Npn \bihua_char_path_name:N #1
+  { c__bihua_ \int_value:w `#1 _tl }
+\cs_new_nopar:Npn \bihua_char_count:N #1
+  {
+    \tl_if_exist:cTF { c__bihua_ \int_value:w `#1 _tl }
+      { \tl_count:c { c__bihua_ \int_value:w `#1 _tl } }
+      { 1 \msg_error:nnn { bihua } { bihua-not-exist } {#1} }
+  }
+\cs_new_nopar:Npn \bihua_select_step:Nn #1#2
+  {
+    \tl_if_exist:cTF { c__bihua_ \int_value:w `#1 _tl }
+      { \tl_item:cn { \bihua_char_path_name:N #1 } {#2} }
+      { { } \msg_error:nnn { bihua } { bihua-not-exist } {#1} }
+  }
+\cs_new_protected_nopar:Npn \bihua_load_char_by_slot:n #1
+  { 
+    \group_begin:
+    \cs_set_nopar:Npn \HZBH ##1##2
+      { \tl_gset:cn { c__bihua_ ##1 _tl } {##2} }
+    \char_set_catcode_space:N \ 
+    \file_input:n {bihua-tex/HanZiBiHua-\int_eval:n{#1}.txt}
+    \group_end:
+  }
+\cs_new_protected_nopar:Npn \bihua_load_char:N #1
+  { \bihua_load_char_by_slot:n {`#1} }
+\cs_new_protected_nopar:Npn \bihua_load_chars:n #1
+  { 
+    \group_begin:
+    \cs_set_nopar:Npn \HZBH ##1##2
+      { \tl_gset:cn { c__bihua_ ##1 _tl } {##2} }
+    \char_set_catcode_space:N \ 
+    \tl_map_inline:nn {#1}
+      { \file_input:n {bihua-tex/HanZiBiHua-\int_value:w`##1.txt} }
+    \group_end:
+  }
+\cs_new_protected_nopar:Npn \bihua_load_chars_by_slot:n #1
+  { 
+    \group_begin:
+    \cs_set_nopar:Npn \HZBH ##1##2
+      { \tl_gset:cn { c__bihua_ ##1 _tl } {##2} }
+    \char_set_catcode_space:N \ 
+    \tl_map_inline:nn {#1}
+      { \file_input:n {bihua-tex/HanZiBiHua-\int_eval:n{##1}.txt} }
+    \group_end:
+  }
+\cs_new_protected_nopar:Npn \bihua_load_chars_by_all_file:n #1
+  {
+    \group_begin:
+    \clist_map_inline:nn {#1} 
+      { \tl_set_eq:cN { c__bihua_ \int_eval:n {##1} _test_tl } \c_empty_tl }
+    \cs_set_nopar:Npn \HZBH ##1##2
+      {
+        \if_cs_exist:w c__bihua_ \int_eval:n {##1} _test_tl \cs_end:
+          \tl_gset:cn { c__bihua_ ##1 _tl } {##2}
+        \fi:
+      }
+    \char_set_catcode_space:N \ 
+    \file_input:n {HanZiBiHua.txt}
+    \group_end:
+  }
+
+\cs_new_protected_nopar:Npn \bihua_color_set:nn #1#2
+  { \color_set:nn {#1} {#2} }
+\cs_new_protected_nopar:Npn \bihua_color_set:nnn #1#2#3
+  { \color_set:nnn {#1} {#2} {#3} }
+\bool_new:N \l__bihua_natural_bool
+\bool_new:N \l__bihua_over_empty_bool
+\box_new:N \l__bihua_curr_box
+\dim_new:N \l__bihua_frame_linewidth_dim
+\dim_new:N \l__bihua_iframe_linewidth_dim
+\dim_new:N \l__bihua_char_linewidth_dim
+\dim_new:N \l__bihua_last_linewidth_dim
+\int_new:N \l__bihua_frame_type_int
+\dim_new:N \l__bihua_inner_t_sep_dim
+\dim_new:N \l__bihua_inner_b_sep_dim
+\dim_new:N \l__bihua_inner_l_sep_dim
+\dim_new:N \l__bihua_inner_r_sep_dim
+\dim_new:N \l__bihua_actual_width_dim
+\keys_define:nn { bihua }
+  {
+    natural .bool_set:N = \l__bihua_natural_bool ,
+    natural .default:n = true ,
+    frame .choices:nn = { outer, none, outerx, x, outertian, tian, outermi, mi }
+      { \int_set_eq:NN \l__bihua_frame_type_int \l_keys_choice_int } ,
+    frame .default:n = outer ,
+    framestroke  .code:n = { \bihua_color_set:nn  { bihuaframestroke } {#1} } ,
+    framestroke* .code:n = { \bihua_color_set:nnn { bihuaframestroke } #1 } ,
+    framecolor  .meta:n = { framestroke  = {#1} } ,
+    framecolor* .meta:n = { framestroke* = {#1} } ,
+    framefill .code:n = 
+      {
+        \tl_if_empty:nTF {#1}
+          { \bihua_color_set:nn { bihuaframefill } { white } \cs_set_nopar:Npn \__bihua_frame_color_fill: { } }
+          { 
+            \bihua_color_set:nn { bihuaframefill } {#1}
+            \cs_set_nopar:Npn \__bihua_frame_color_fill: { \color_fill:n {#1} } 
+          }
+      } ,
+    framefill* .code:n = 
+      { 
+        \bihua_color_set:nnn { bihuaframefill } #1
+        \cs_set_nopar:Npn \__bihua_frame_color_fill: { \color_fill:nn #1 } 
+      } ,
+    framelinewidth .dim_set:N = \l__bihua_frame_linewidth_dim ,
+    framedashpattern .choice: ,
+    framedashpattern / solid .code:n = 
+      { \cs_set:Npn \__bihua_frame_dash_pattern:
+          { \draw_dash_pattern:nn { } { 0pt } } } ,
+    framedashpattern / dotted .code:n = 
+      { \cs_set:Npn \__bihua_frame_dash_pattern:
+          { \draw_dash_pattern:nn { \l__bihua_frame_linewidth_dim , 40\BHU } { 0pt } } } ,
+    framedashpattern / dashed .code:n = 
+      { \cs_set:Npn \__bihua_frame_dash_pattern:
+          { \draw_dash_pattern:nn { 40\BHU , 40\BHU } { 0pt } } } ,
+    charstroke  .code:n = { \bihua_color_set:nn  { bihuacharstroke } {#1} } ,
+    charstroke* .code:n = { \bihua_color_set:nnn { bihuacharstroke } #1 } ,
+    charcolor  .meta:n = { charstroke  = {#1} } ,
+    charcolor* .meta:n = { charstroke* = {#1} } ,
+    charfill .code:n = 
+      {
+        \tl_if_empty:nTF {#1}
+          { \bihua_color_set:nn { bihuacharfill } { white } \cs_set_nopar:Npn \__bihua_char_color_fill: { } }
+          { 
+            \bihua_color_set:nn { bihuacharfill } {#1}
+            \cs_set_nopar:Npn \__bihua_char_color_fill: { \color_fill:n {#1} } 
+          }
+      } ,
+    charfill* .code:n = 
+      { 
+        \bihua_color_set:nnn { bihuacharfill } #1
+        \cs_set_nopar:Npn \__bihua_char_color_fill: { \color_fill:nn #1 } 
+      } ,
+    charlinewidth .dim_gset:N = \l__bihua_char_linewidth_dim ,
+    chardashpattern .choice: ,
+    chardashpattern / solid .code:n = 
+      { \cs_set:Npn \__bihua_char_dash_pattern:
+          { \draw_dash_pattern:nn { } { 0pt } } } ,
+    chardashpattern / dotted .code:n = 
+      { \cs_set:Npn \__bihua_char_dash_pattern:
+          { \draw_dash_pattern:nn { \l__bihua_char_linewidth_dim , 40\BHU } { 0pt } } } ,
+    chardashpattern / dashed .code:n = 
+      { \cs_set:Npn \__bihua_char_dash_pattern:
+          { \draw_dash_pattern:nn { 40\BHU , 40\BHU } { 0pt } } } ,
+
+    stroke    .meta:n = { framestroke = {#1} , charstroke = {#1} } ,
+    stroke*   .meta:n = { framestroke* = {#1} , charstroke* = {#1} } ,
+    color     .meta:n = { framestroke = {#1} , charstroke = {#1} } ,
+    color*    .meta:n = { framestroke* = {#1} , charstroke* = {#1} } ,
+    linewidth .meta:n = { framelinewidth = {#1} , charlinewidth = {#1} } ,
+    dashpattern .meta:n = { framedashpattern = {#1} , chardashpattern = {#1} } ,
+
+    iframestroke  .code:n = { \bihua_color_set:nn  { bihuaiframestroke } {#1} } ,
+    iframestroke* .code:n = { \bihua_color_set:nnn { bihuaiframestroke } #1 } ,
+    iframecolor  .meta:n = { iframestroke  = {#1} } ,
+    iframecolor* .meta:n = { iframestroke* = {#1} } ,
+    iframelinewidth .dim_set:N = \l__bihua_iframe_linewidth_dim ,
+    iframedashpattern .choice: ,
+    iframedashpattern / solid .code:n = 
+      { \cs_set:Npn \__bihua_iframe_dash_pattern:
+          { \draw_dash_pattern:nn { } { 0pt } } } ,
+    iframedashpattern / dotted .code:n = 
+      { \cs_set:Npn \__bihua_iframe_dash_pattern:
+          { \draw_dash_pattern:nn { \l__bihua_iframe_linewidth_dim , 40\BHU } { 0pt } } } ,
+    iframedashpattern / dashed .code:n = 
+      { \cs_set:Npn \__bihua_iframe_dash_pattern:
+          { \draw_dash_pattern:nn { 40\BHU , 40\BHU } { 0pt } } } ,
+
+    laststroke  .code:n = { \bihua_color_set:nn  { bihualaststroke } {#1} } ,
+    laststroke* .code:n = { \bihua_color_set:nnn { bihualaststroke } #1 } ,
+    lastfill .code:n = 
+      {
+        \tl_if_empty:nTF {#1}
+          { \bihua_color_set:nn { bihualastfill } { white } \cs_set_nopar:Npn \__bihua_last_color_fill: { } }
+          { 
+            \bihua_color_set:nn { bihualastfill } {#1}
+            \cs_set_nopar:Npn \__bihua_last_color_fill: { \color_fill:n {#1} } 
+          }
+      } ,
+    lastfill* .code:n = 
+      { 
+        \bihua_color_set:nnn { bihualastfill } #1
+        \cs_set_nopar:Npn \__bihua_last_color_fill: { \color_fill:nn #1 } 
+      } ,
+    lastlinewidth .dim_gset:N = \l__bihua_last_linewidth_dim ,
+    lastdashpattern .choice: ,
+    lastdashpattern / solid .code:n = 
+      { \cs_set:Npn \__bihua_last_dash_pattern:
+          { \draw_dash_pattern:nn { } { 0pt } } } ,
+    lastdashpattern / dotted .code:n = 
+      { \cs_set:Npn \__bihua_last_dash_pattern:
+          { \draw_dash_pattern:nn { \l__bihua_last_linewidth_dim , 40\BHU } { 0pt } } } ,
+    lastdashpattern / dashed .code:n = 
+      { \cs_set:Npn \__bihua_last_dash_pattern:
+          { \draw_dash_pattern:nn { 40\BHU , 40\BHU } { 0pt } } } ,
+    lastcolor  .meta:n = { laststroke  = {#1} , lastfill  = {#1} } ,
+    lastcolor* .meta:n = { laststroke* = {#1} , lastfill* = {#1} } ,
+
+    innert .dim_set:N = \l__bihua_inner_t_sep_dim ,
+    innerb .dim_set:N = \l__bihua_inner_b_sep_dim ,
+    innerl .dim_set:N = \l__bihua_inner_l_sep_dim ,
+    innerr .dim_set:N = \l__bihua_inner_r_sep_dim ,
+    innerx .meta:n = { innert = {#1} , innerb = {#1} } ,
+    innery .meta:n = { innerl = {#1} , innerr = {#1} } ,
+    inner  .meta:n = { innert = {#1} , innerb = {#1} , innerl = {#1} , innerr = {#1} } ,
+    width .code:n = { \bihua_set_width:n {#1} } ,
+    unit  .code:n = { \bihua_set_unit:n  {#1} } ,
+    actualwidth .dim_set:N = \l__bihua_actual_width_dim ,
+    overempty .bool_set:N = \l__bihua_over_empty_bool ,
+    overempty .default:n = true ,
+  }
+\keys_set:nn { bihua }
+  {
+    frame       = outer ,
+    framestroke = black ,
+    framefill   = { } ,
+    framelinewidth = 40\BHU ,
+    framedashpattern = solid ,
+    iframestroke = black!60!white ,
+    iframelinewidth = 30\BHU ,
+    iframedashpattern = dashed ,
+    charstroke  = black ,
+    charfill    = black ,
+    charlinewidth = 10\BHU ,
+    chardashpattern = solid ,
+    laststroke  = red ,
+    lastfill    = red ,
+    lastlinewidth = 10\BHU ,
+    lastdashpattern = solid ,
+  }
+\cs_new:Npn \__bihua_over_not_check:nn #1#2
+  {
+    \tl_set:Nx \l__bihua_svg_temp_tl 
+      { \tl_range:cnn { \bihua_char_path_name:N #1 } { 1 } { #2-1 } }
+  }
+\cs_new:Npn \__bihua_over_check:nn #1#2
+  {
+    \int_compare:nNnTF { \int_abs:n {#2} } > { \bihua_char_count:N #1 }
+      { \tl_set_eq:NN \l__bihua_svg_temp_tl \c_empty_tl }
+      {
+        \tl_set:Nx \l__bihua_svg_temp_tl 
+          { \tl_range:cnn { \bihua_char_path_name:N #1 } { 1 } { #2-1 } }
+      }
+  }
+\cs_new_protected_nopar:Npn \bihua_make_char_step:Nn #1#2
+  {
+    \reverse_if:N \if_cs_exist:w \bihua_char_path_name:N #1 \cs_end:
+      \bihua_load_char:N #1
+    \fi:
+    \draw_begin:
+    \str_if_eq:eeTF {#2} { * }
+      { 
+        \tl_set_eq:Nc \l__bihua_svg_temp_tl { \bihua_char_path_name:N #1 } 
+        \tl_set_eq:NN \l__bihua_svg_last_tl \c_empty_tl
+      }
+      {
+        \bool_if:NTF \l__bihua_over_empty_bool
+          { \__bihua_over_check:nn } { \__bihua_over_not_check:nn } 
+            {#1} {#2}
+        \tl_set:Nx \l__bihua_svg_last_tl
+          { \tl_item:cn { \bihua_char_path_name:N #1 } {#2} }
+      }
+
+    \reverse_if:N \if_bool:N \l__bihua_natural_bool
+      \if_int_odd:w \l__bihua_frame_type_int
+        \draw_scope_begin:
+        \draw_path_rectangle_corners:nn 
+          { 0\BHU - \l__bihua_inner_l_sep_dim , -124\BHU - \l__bihua_inner_b_sep_dim }
+          { 1024\BHU + \l__bihua_inner_r_sep_dim , 900\BHU + \l__bihua_inner_t_sep_dim }
+        \color_stroke:n { bihuaframestroke }
+        \__bihua_frame_dash_pattern:
+        \draw_linewidth:n \l__bihua_frame_linewidth_dim
+        \token_if_eq_meaning:NNTF \__bihua_frame_color_fill: \c_empty_tl
+          { \draw_path_use_clear:n { stroke } }
+          {
+            \color_fill:n { bihuaframefill } 
+            \draw_path_use_clear:n { stroke , fill }
+          }
+        \draw_scope_end:
+      \else:
+        \draw_path_rectangle_corners:nn 
+          { 0\BHU - \l__bihua_inner_l_sep_dim , -124\BHU - \l__bihua_inner_b_sep_dim }
+          { 1024\BHU + \l__bihua_inner_r_sep_dim , 900\BHU + \l__bihua_inner_t_sep_dim }
+        \draw_path_use_clear:n { clip }
+      \fi:
+      \bool_set_false:N \l_draw_bb_update_bool
+
+      \if_int_compare:w \int_eval:w \l__bihua_frame_type_int / 2 > 1 \exp_stop_f:
+        \draw_scope_begin:
+        \color_stroke:n { bihuaiframestroke }
+        \__bihua_iframe_dash_pattern:
+        \draw_linewidth:n \l__bihua_iframe_linewidth_dim
+      \if_case:w \int_eval:w \l__bihua_frame_type_int / 2 \or: \or:
+        \exp_after:wN \use_i:nn  \or:
+        \exp_after:wN \use_ii:nn \or:
+        \exp_after:wN \use:nn
+      \fi:
+        { \__bihua_draw_x:nnnn 
+            { 0\BHU - \l__bihua_inner_l_sep_dim }
+            { -124\BHU - \l__bihua_inner_b_sep_dim }
+            { 1024\BHU + \l__bihua_inner_r_sep_dim }
+            { 900\BHU + \l__bihua_inner_t_sep_dim } }
+        { \__bihua_draw_tian:nnnn 
+            { 0\BHU - \l__bihua_inner_l_sep_dim }
+            { -124\BHU - \l__bihua_inner_b_sep_dim }
+            { 1024\BHU + \l__bihua_inner_r_sep_dim }
+            { 900\BHU + \l__bihua_inner_t_sep_dim } }
+        \draw_path_use_clear:n { stroke }
+        \draw_scope_end:
+      \fi:
+    \fi:
+
+    \tl_if_empty:NF \l__bihua_svg_temp_tl
+      {
+        \draw_scope_begin:
+        \color_stroke:n { bihuacharstroke }
+        \__bihua_char_dash_pattern:
+        \draw_linewidth:n \l__bihua_char_linewidth_dim
+        \tl_map_function:NN \l__bihua_svg_temp_tl \bihua_svg_path:n
+        \token_if_eq_meaning:NNTF \__bihua_char_color_fill: \c_empty_tl
+          { \draw_path_use_clear:n { stroke } }
+          {
+            \color_fill:n { bihuacharfill }
+            \draw_path_use_clear:n { stroke , fill }
+          }
+        \draw_scope_end:
+      }
+
+    \tl_if_empty:NF \l__bihua_svg_last_tl
+      {
+        \draw_scope_begin:
+        \color_stroke:n { bihualaststroke }
+        \__bihua_last_dash_pattern:
+        \draw_linewidth:n \l__bihua_last_linewidth_dim
+        \bihua_svg_path:N \l__bihua_svg_last_tl
+        \token_if_eq_meaning:NNTF \__bihua_last_color_fill: \c_empty_tl
+          { \draw_path_use_clear:n { stroke } }
+          {
+            \color_fill:n { bihualastfill }
+            \draw_path_use_clear:n { stroke , fill }
+          }
+        \draw_scope_end:
+      }
+    \draw_end:
+  }
+\cs_new_protected_nopar:Npn \bihua_show_char_step:Nn #1#2
+  {
+    \hbox_set:Nn \l__bihua_curr_box { \bihua_make_char_step:Nn #1 {#2} }
+    \reverse_if:N \if_dim:w \l__bihua_actual_width_dim = \c_zero_dim
+      \box_resize_to_wd:Nn \l__bihua_curr_box \l__bihua_actual_width_dim
+    \fi:
+    \box_use_drop:N \l__bihua_curr_box
+  }
+\cs_new:Npn \__bihua_draw_x:nnnn #1#2#3#4
+  {
+    \draw_path_moveto:n { #1 + \l__bihua_frame_linewidth_dim , #2 + \l__bihua_frame_linewidth_dim }
+    \draw_path_lineto:n { #3 - \l__bihua_frame_linewidth_dim , #4 - \l__bihua_frame_linewidth_dim }
+    \draw_path_moveto:n { #1 + \l__bihua_frame_linewidth_dim , #4 - \l__bihua_frame_linewidth_dim }
+    \draw_path_lineto:n { #3 - \l__bihua_frame_linewidth_dim , #2 + \l__bihua_frame_linewidth_dim }
+  }
+\cs_new:Npn \__bihua_draw_tian:nnnn #1#2#3#4
+  {
+    \draw_path_moveto:n { #1 + \l__bihua_frame_linewidth_dim , ( #2 + #4 ) / 2  }
+    \draw_path_lineto:n { #3 - \l__bihua_frame_linewidth_dim , ( #2 + #4 ) / 2 }
+    \draw_path_moveto:n { ( #1 + #3 ) / 2 , #2 + \l__bihua_frame_linewidth_dim }
+    \draw_path_lineto:n { ( #1 + #3 ) / 2 , #4 - \l__bihua_frame_linewidth_dim }
+  }
+
+
+\cs_new_protected_nopar:Npn \bihuaset { \keys_set:nn { bihua } }
+\NewDocumentCommand \bihuasetstyle { >{\TrimSpaces} m m }
+  { \keys_define:nn { bihua } { #1 .meta:n = {#2} } }
+\NewDocumentCommand \showBiHua 
+  { s O{} O{\tex_hskip:D -\l__bihua_iframe_linewidth_dim plus 5pt minus -2pt} m m }
+  {
+    \mode_leave_vertical:
+    \group_begin:
+    \keys_set:nn { bihua } {#2}
+    \IfBooleanTF {#1}
+      { \exp_last_unbraced:Nf \bihua_show_char_step:Nn {#4} {#5} }
+      {
+        \str_if_eq:eeTF {#5} {*}
+          {
+            \exp_args:Nnnf \__bihua_show_aux_step:nnn 
+              { \exp_last_unbraced:Nf \bihua_char_count:N {#4} }
+              {#3} {#4}
+          }
+          { 
+            \int_compare:nNnTF {#5} > { 0 }
+              { \exp_args:Nnnf \__bihua_show_aux_step:nnn {#5} }
+              { 
+                \exp_args:Nnnf \__bihua_show_aux_step:nnn 
+                  { \exp_last_unbraced:Nf \bihua_char_count:N {#4} + #5 + 1 } 
+              }
+              {#3} {#4}
+          }
+      }
+    \group_end:
+  }
+\cs_new:Npn \__bihua_show_aux_step:nnn #1#2#3
+  {
+    \int_compare:nNnT {#1} > 1
+      {
+        \int_step_inline:nn { #1 - 1 } 
+          { \bihua_show_char_step:Nn #3 {##1} #2 }
+      }
+      \bihua_show_char_step:Nn #3 {#1}
+  }
+\NewDocumentCommand \loadBiHua { s }
+  {
+    \IfBooleanTF {#1}
+      { \bihua_load_chars_by_all_file:n }
+      { \bihua_load_chars:n }
+  }
+
+\ExplSyntaxOff
+\makeatother

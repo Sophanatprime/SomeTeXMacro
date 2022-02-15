@@ -1,0 +1,89 @@
+%% license：MIT
+%% author：雾月，https://github.com/Sophanatprime
+\documentclass{article}
+\usepackage{l3draw}
+\usepackage[hmargin=2cm]{geometry}
+
+\input{bihua.tex}
+
+\iffalse
+%% 文档接口
+\BHU: 基准单位单位，随着 width 的值而改变，一般是 0.01pt，具体值 \BHU=width/1024
+\bihuaset {<options>}: 设置命令
+\bihuasetstyle {<name>} {<options>}: 定义样式
+\showBiHua * [<options>] [<seperator>] {<char>} {<step>}:
+  * 的版本输出 1 ~ <step> 画作为一个“字符”
+  不带 * 的版本输出 1 ~ <step> 画，新的一画叠加的旧的上，见下方的例子
+  <options> 为键值选项
+  <seperator> 为输出的字符之间的分隔记号，初始值为一个 hskip
+  <char> 字符
+  <step> 到第 <step> 笔时中止，* 表示全部笔画
+\loadBiHua * {<chars>}: 加载预定义的笔画，必须首先加载才能够使用这些笔画
+
+%%--- 编程接口 ---
+\bihua_show_char_step:Nn 显示 #1 的 1 ~ #2 画作为一个“字符”，自动加载所需的字符
+\bihua_make_char_step:Nn 输出自然宽度下的笔画，自动加载所需的字符，与 \bihua_show_char_step:Nn 的不同是 make 不会对其进行缩放
+\bihua_svg_path:n 将 #1 转化为 l3draw 绘图命令，#1 是 svg 文件的 path 的 d 属性
+\bihua_svg_path:N \bihua_svg_path:c
+  #1 是一个保存 svg 文件的 path 的 d 属性的 tl
+\bihua_char_path_name:N 返回一个存储着字符 #1 svg path 的 tl 名字，可以用作如 \tl_count:c \tl_item:c 的参数
+\bihua_select_step:Nn 选择字符 #1 的第 #2 笔，返回 svg path，不会自动加载笔画
+\bihua_char_count:N 计算字符 #1 的笔画数，不会自动加载笔画
+\bihua_load_char_by_slot:n
+\bihua_load_char:N
+\bihua_load_chars:n
+\bihua_load_chars_by_slot:n
+\bihua_load_chars_by_all_file:n
+
+%%% --- 可用的键值选项 ---
+- natural：布尔值，是否使用其自然宽度，启用后，不会显示外框和内部的线
+- frame：{outer, none, outerx, x, outertian, tian, outermi, mi} 可选值，outer 表示外框，none 不显示，x 表示两条斜线，tian 田字格线，mi 米字格线
+- framestroke framestroke* framecolor framecolor*：设置外框颜色，作用相同，仅可使用 LaTeX3 l3color 模块中的颜色
+- framefill framefill*：填充颜色
+- framelinewidth：线宽
+- framedashpattern：{solid, dotted, dashed}，线型
+- charstroke charstroke* charcolor charcolor* charfill charfill* charlinewidth chardashpattern：用于设置字符的样式
+- stroke stroke* color color* linewidth dashpattern：统一设置 frame 和 char
+- iframestroke iframestroke* iframecolor iframecolor* iframelinewidth iframedashpattern：用于设置内部线的样式，无填充选项
+- laststroke laststroke* lastfill lastfill* lastlinewidth lastdashpattern：用于设置当前笔画的样式，lastcolor 统一设置 stroke 和 fill
+- innert innerb innerl innerr innerx innery inner：设置内部额外间距，使用 natural 时无效，t b l r x y 分别表示顶、底、左、右、水平、竖直
+- overempty：布尔值，使用时，使用空的盒子替换 <step> 超过该字的笔画那些的盒子
+- width：设置基准宽度，这会修改 \BHU 的值
+- unit：设置 \BHU
+- actualwidth：设置真实宽度，将缩放到该值，为 0pt 时使用自然宽度，当使用了 natural、overempty 且 <step> 超过该字的笔画时，设置该值为非零则会出错
+\fi
+
+\begin{document}
+
+hello, \LaTeXe. \showBiHua*[natural,actualwidth=1em]{好}{*}
+
+\bihuaset{inner=2pt,frame=outermi,width=1cm-4pt}
+
+\loadBiHua{好学习天向上}
+\loadBiHua{相得益彰}
+
+\showBiHua[charfill=white,charlinewidth=20\BHU] {好} {*}
+\showBiHua*[charfill=black!10!white,charlinewidth=20\BHU] {好} {*}
+\showBiHua*[natural]{好}{*}
+
+{\parindent=0pt 
+\bihuaset{overempty}
+\showBiHua*{好}{*} \showBiHua{好}{10}\par 
+\showBiHua*{好}{*} \showBiHua{好}{10}\par 
+\showBiHua*{学}{*} \showBiHua{学}{10}\par 
+\showBiHua*{习}{*} \showBiHua{习}{10}\par 
+
+\bihuaset{overempty=false}
+\showBiHua*{天}{*} \showBiHua{天}{10}\par 
+\showBiHua*{天}{*} \showBiHua{天}{10}\par 
+\showBiHua*{向}{*} \showBiHua{向}{10}\par 
+\showBiHua*{上}{*} \showBiHua{上}{10}\par 
+
+\bihuasetstyle{lastwrite}{charfill=black!10!white,lastfill=red!15!white,laststroke=red,lastlinewidth=20\BHU}
+\showBiHua*{相}{*} \showBiHua[lastwrite]{相}{15}\par
+\showBiHua*{得}{*} \showBiHua[lastwrite]{得}{15}\par
+\showBiHua*{益}{*} \showBiHua[lastwrite]{益}{15}\par
+\showBiHua*{彰}{*} \showBiHua[lastwrite]{彰}{15}\par
+}
+
+\end{document}
