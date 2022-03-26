@@ -1,0 +1,76 @@
+\documentclass{ctexbook}
+\usepackage{etoolbox}
+\usepackage{xcolor}
+\usepackage{zref}
+\usepackage[colorlinks]{hyperref}
+\usepackage{fancyhdr}
+\input{core.tex}
+
+\usepackage{unicode-math}
+\setmathfont{XITS Math}
+\makeatletter
+\def\cus@chapterseen{\CusDotLink{$\smblkcircle$}\hskip.23em}
+\def\cus@chapterseeing{$\smblkdiamond$\hskip.23em}
+\def\cus@chaptertosee{\CusDotLink{$\smwhtcircle$}\hskip.2em}
+
+% \CusChapterPageBarColorList 定义进度条的颜色
+% 底部显示的文字，\cusfitbarwidth ：将文字水平缩放以适合宽度，\cusautosize ：文字缩放以适合宽度，\cusparbox{...} ：parbox
+\def\CusChapterPageBarTextList{\cusfitbarwidth{目录}}
+% 如果上面没有对应的文字，则使用下面这个
+\def\CusChapterPageBarText{\cusfitbarwidth{第\chinese{custextcounter}回}}
+% 文字样式
+\def\CusChapterPageBarTextStyle{\tiny}
+\newcommand\cus@footprogress{
+  \fancyfoot[OR]{\CusChapterPageDotInfo{\cus@chapterseen}[\cus@chapterseeing]{\cus@chaptertosee}}
+  \fancyfoot[EL]{\CusChapterPageDotInfo\cus@chapterseen[\cus@chapterseeing]\cus@chaptertosee}
+  \fancyfoot[C]{\hskip-\headwidth\begin{picture}(0,0)
+    \put(0,14){\CusChapterPageBarInfo[{\hskip-1.4pt \raisebox{.69\cusbarheight}{\tiny $\smblkdiamond$}}]}
+    \end{picture}}
+}
+\fancypagestyle{plain}{
+  \fancyhf{}
+  \def\headrulewidth{0pt}
+  \def\footrulewidth{0pt}
+}
+\fancypagestyle{partplain}[plain]{}
+\fancypagestyle{chapterplain}[plain]{ \cus@footprogress }
+\ctexset{part/pagestyle=partplain, chapter/pagestyle=chapterplain}
+
+\fancypagestyle{fancy}{
+  \fancyhf{}
+  \fancyhead[R]{\thepage}
+  \fancyhead[L]{{\kaishu\leftmark}}
+  \def\headrulewidth{0pt}
+  \def\footrulewidth{0pt}
+}
+\fancypagestyle{chapterprogress}[fancy]{ \cus@footprogress }
+
+\pagestyle{chapterprogress}
+\setlength{\headheight}{15pt}
+
+
+\makeatother
+
+
+\usepackage[b5paper,top=2cm,bottom=3cm,footskip=1.5cm,textwidth=40\ccwd,hmarginratio=1:1]{geometry}
+\fancyhfoffset{0cm}
+\usepackage{varwidth} %% 提供 varwidth 环境
+\usepackage[toc]{multitoc}
+\ctexset{
+  chapter/name = {第,回},
+  chapter/titleformat = \chaptertitleformat
+}
+\newcommand\chaptertitleformat[1]{%% 以标题内容为参数
+  \begin{varwidth}[t]{.7\linewidth}#1\end{varwidth}}
+\makeatletter
+\@ifundefined{strcmp}{\expandafter\let\expandafter\strcmp\csname tex_strcmp:D\endcsname}{}
+\def\ttlbreak{\ifnum\strcmp{\@currenvir}{varwidth}=0 \\ \else \texorpdfstring{\hbox{\space}}{ }\fi}
+\makeatother
+
+\raggedbottom
+
+\begin{document}
+
+\input{testtext.tex}
+
+\end{document}

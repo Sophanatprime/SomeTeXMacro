@@ -1,0 +1,251 @@
+\makeatletter
+
+\def\cus@color@list{%800000,8B0000,A52A2A,B22222,
+DC143C,FF0000,FF6347,FF7F50,CD5C5C,F08080,%
+E9967A,FA8072,FFA07A,FF4500,FF8C00,FFA500,FFD700,B8860B,DAA520,EEE8AA,%
+BDB76B,F0E68C,808000,FFFF00,9ACD32,556B2F,6B8E23,7CFC00,7FFF00,ADFF2F,%
+006400,008000,228B22,00FF00,32CD32,90EE90,98FB98,8FBC8F,00FA9A,00FF7F,%
+2E8B57,66CDAA,3CB371,20B2AA,2F4F4F,008080,008B8B,00FFFF,00FFFF,E0FFFF,%
+00CED1,40E0D0,48D1CC,AFEEEE,7FFFD4,B0E0E6,5F9EA0,4682B4,6495ED,00BFFF,%
+1E90FF,ADD8E6,87CEEB,87CEFA,191970,000080,00008B,0000CD,0000FF,4169E1,%
+8A2BE2,4B0082,483D8B,6A5ACD,7B68EE,9370DB,8B008B,9400D3,9932CC,BA55D3,%
+800080,D8BFD8,DDA0DD,EE82EE,FF00FF,DA70D6,C71585,DB7093,FF1493,FF69B4,%
+FFB6C1,FFC0CB,FAEBD7,F5F5DC,FFE4C4,FFEBCD,F5DEB3,FFF8DC,FFFACD,FAFAD2,%
+FFFFE0,8B4513,A0522D,D2691E,CD853F,F4A460,DEB887,D2B48C,BC8F8F,FFE4B5,%
+FFDEAD,FFDAB9,FFE4E1,FFF0F5,FAF0E6,FDF5E6,FFEFD5,FFF5EE,F5FFFA,708090,%
+778899,B0C4DE,E6E6FA,FFFAF0,F0F8FF,F8F8FF,F0FFF0,FFFFF0,F0FFFF,FFFAFA,%
+000000,696969,808080,A9A9A9,C0C0C0,D3D3D3,DCDCDC,F5F5F5,FFFFFF%
+}
+
+\gdef\cus@pagenumbering{\@arabic}
+\pretocmd\pagenumbering
+  {\gdef\cus@pagenumbering{\csname @#1\endcsname}}
+  {}{\@nil}
+
+\NewHook{cusdoc/afterpart}
+\NewHook{cusdoc/afterchapter}
+\ctexset{
+  part/aftertitle={\par\UseHook{cusdoc/afterpart}},
+  chapter/aftertitle={\par\UseHook{cusdoc/afterchapter}},
+}
+\zref@newlist{cusdoc@pageinfo}
+\zref@newprop{cus@page}[0]{0}
+\zref@newprop{cus@thepage}[0]{0}
+\zref@newprop{cus@totalpages}[0]{0}
+\zref@newprop{cus@shipoutcounter}[0]{0}
+\zref@addprops{cusdoc@pageinfo}{cus@page, cus@thepage, cus@totalpages, cus@shipoutcounter}
+\def\cus@record@chapterinfo{%
+  \zref@setcurrent{cus@page}{\the\c@page}%
+  \zref@setcurrent{cus@thepage}{\thepage}%
+  \zref@setcurrent{cus@totalpages}{\the\c@totalpages}%
+  \zref@setcurrent{cus@shipoutcounter}{\the\ReadonlyShipoutCounter}}
+\newcount\cus@readonlychapternum
+\AddToHook{cusdoc/afterpart}[./record/page]{%
+  \cus@record@chapterinfo
+  \global\advance\cus@readonlychapternum\@ne
+  \zref@labelbylist
+    {cus@pageinfo@chapter\the\cus@readonlychapternum}{cusdoc@pageinfo}}
+\AddToHook{cusdoc/afterchapter}[./record/page]{%
+  \cus@record@chapterinfo
+  \global\advance\cus@readonlychapternum\@ne
+  \zref@labelbylist
+    {cus@pageinfo@chapter\the\cus@readonlychapternum}{cusdoc@pageinfo}}
+\AddToHook{enddocument/afterlastpage}[./record/page]{%
+  \immediate\write\@auxout{\gdef\string\cus@readonly@totalchapternum{\the\cus@readonlychapternum}}%
+  \global\advance\cus@readonlychapternum\@ne
+  \cus@record@chapterinfo
+  \zref@wrapper@immediate{\zref@labelbylist
+    {cus@pageinfo@chapter\the\cus@readonlychapternum}{cusdoc@pageinfo}}}
+
+
+\RequirePackage{pifont}
+\renewcommand\thefootnote{\ding{\numexpr171+\value{footnote}}}
+\renewcommand\thempfootnote{\ding{\numexpr171+\value{mpfootnote}}}
+
+
+\ExplSyntaxOn 
+\int_new:N \c@custextcounter
+\int_new:N \c@cuscurrnumber
+\sys_if_engine_xetex:TF { \cs_new_eq:NN \cuslinkbox \XeTeXLinkBox } { \cs_new_eq:NN \cuslinkbox \use:n }
+\dim_new:N \cusbarheight
+\dim_set:Nn \cusbarheight { 10pt }
+\int_new:N \g__cusdoc_chapter_linked_int
+\NewDocumentCommand \CusChapterPageDotInfo { m O{#1} m }
+  {
+    \group_begin:
+    \cs_set_eq:NN \CusDotLink \__cusdoc_chapter_dot_linked:n
+    \zref@ifrefundefined{cus@pageinfo@chapter\the\cus@readonlychapternum}{}
+      {
+        \int_gset:Nn \g__cusdoc_chapter_linked_int 
+          { 
+            \zref@extract 
+              { cus@pageinfo@chapter\the\cus@readonlychapternum }
+              { cus@page }
+          }
+        \int_compare:nNnT \__cusdoc_chapter_usedpage: > 1
+          {
+            \prg_replicate:nn { \__cusdoc_chapter_usedpage: - 1 }
+              { #1 \int_gincr:N \g__cusdoc_chapter_linked_int }
+          }
+        #2 \int_gincr:N \g__cusdoc_chapter_linked_int
+        \int_compare:nNnT
+          { \__cusdoc_chapter_distance: - \__cusdoc_chapter_usedpage: } > 0
+          { 
+            \prg_replicate:nn 
+              { \__cusdoc_chapter_distance: - \__cusdoc_chapter_usedpage: } 
+              { #3 \int_gincr:N \g__cusdoc_chapter_linked_int }
+          }
+      }
+    \group_end:
+  }
+\cs_new_protected:Npn \__cusdoc_chapter_dot_linked:n #1
+  {
+    \hyperlink { page.\cus@pagenumbering\g__cusdoc_chapter_linked_int } {#1}
+  }
+
+\int_zero:N \@tempcnta
+\clist_map_inline:Nn \cus@color@list 
+  { \int_incr:N \@tempcnta \exp_args:Ne \definecolor {cusbarcolor\the\@tempcnta} {HTML} {#1} }
+\int_zero:N \@tempcnta
+\tl_set:Nn \CusChapterPageBarTextStyle { \footnotesize }
+\NewDocumentCommand \CusChapterPageBarInfo { O{} }
+  { 
+    \hbox_to_wd:nn \headheight
+      {
+        \int_gzero:N \c@custextcounter
+        \seq_map_indexed_inline:Nn \g__cus_barwidth_ratio_seq
+          {
+            \tl_set:Nx \l__cus_page_tl 
+              {
+                \zref@extract 
+                  { cus@pageinfo@chapter ##1 }
+                  { cus@thepage } 
+              }
+            \int_set:Nn \c@cuscurrnumber {##1}
+            \if_int_compare:w ##1 = \cus@readonlychapternum
+              \hbox_overlap_right:n 
+                { 
+                  \tex_hskip:D \fp_eval:n 
+                    { ##2 * \__cusdoc_chapter_usedpage: / \__cusdoc_chapter_distance: }\headwidth 
+                  #1 
+                }
+            \fi:
+            \__cusdoc_make_curr_bar:nn {##1} {##2}
+          }
+        \hss
+      }
+  }
+\AtBeginDocument { \__cusdoc_prepare_bar_box: }
+\cs_new_protected:Npn \__cusdoc_prepare_bar_box:
+  {
+    \seq_gset_eq:NN \g__cus_barwidth_ratio_seq \c_empty_seq
+    \cs_if_exist:cT {cus@readonly@totalchapternum}
+      {
+        \clist_if_exist:NT \CusChapterPageBarColorList
+          {
+            \int_zero:N \l_tmpa_int
+            \clist_map_inline:Nn \CusChapterPageBarColorList
+              {
+                \int_incr:N \l_tmpa_int
+                \exp_args:Ne \colorlet { cusbarcolor\the\l_tmpa_int } {##1}
+              }
+            \int_zero:N \l_tmpa_int
+          }
+        \cs_gset_nopar:Npn \cus@barcolor ##1 { cusbarcolor\number ##1 }
+        \clist_if_exist:NT \CusChapterPageBarTextList
+          {
+            \int_zero:N \l_tmpa_int
+            \clist_map_inline:Nn \CusChapterPageBarTextList
+              {
+                \int_incr:N \l_tmpa_int
+                \tl_const:cn { cusbartext\the\l_tmpa_int } {##1}
+              }
+            \int_zero:N \l_tmpa_int
+          }
+        \cs_gset_nopar:Npn \cus@bartext ##1
+          { 
+            \tl_if_exist:cTF { cusbartext\number ##1 } 
+              { \tl_use:c { cusbartext\number ##1 } }
+              { \int_gincr:N \c@custextcounter \use:c { CusChapterPageBarText } }
+          }
+        \int_step_inline:nn { \cus@readonly@totalchapternum }
+          {
+            \seq_gput_right:Nx \g__cus_barwidth_ratio_seq 
+              { \fp_eval:n { \__cusdoc_chapter_distance:n {##1} / \PreviousTotalPages } }
+          }
+      }
+  }
+\cs_new_protected_nopar:Npn \__cusdoc_make_curr_bar:nn #1#2
+  {
+    \hbox_to_wd:nn { #2 \headwidth }
+      {
+        \dim_set:Nn \l_tmpa_dim { #2 \headwidth/2 }
+        \hss
+        \hyper@link {} { page. \l__cus_page_tl }
+          {
+            \cuslinkbox 
+              {
+                \color { \cus@barcolor {#1} }
+                \vrule \@height.7\cusbarheight \@depth.3\cusbarheight \@width #2\headwidth
+                \hskip -\l_tmpa_dim
+                \smash { \hbox_to_zero:n { \color{-.} \use:c { CusChapterPageBarTextStyle } \hss \cus@bartext {#1} \hss } }
+                \hskip \l_tmpa_dim
+                \vrule \@height.7\cusbarheight \@depth.3\cusbarheight \@width 0.02em
+              }
+          }
+        \hss
+      }
+  }
+\cs_new_nopar:Npn \cusfitbarwidth #1
+  {
+    \hbox_set:Nn 0 {#1}
+    \dim_set:Nn \l_tmpb_dim { \box_ht:N 0 }
+    \if_dim:w 1.95\l_tmpa_dim < \box_wd:N 0
+      \box_resize_to_wd_and_ht:Nnn 0 { 1.9\l_tmpa_dim } { \l_tmpb_dim }
+    \fi:
+    \box_use_drop:N 0
+  }
+\cs_new_nopar:Npn \cusautosize #1
+  {
+    \hbox_set:Nn 0 {#1}
+    \box_autosize_to_wd_and_ht:Nnn 0 { 1.9\l_tmpa_dim } { .69\cusbarheight }
+    \box_use_drop:N 0
+  }
+\NewDocumentCommand \cusparbox { O{c} +m }
+  {
+    \parbox [#1] { 1.9\l_tmpa_dim } {#2}
+  }
+\cs_new_nopar:Npn \__cusdoc_chapter_distance:n #1
+  {
+    \exp:w
+    \exp_end_continue_f:w
+    \int_eval:w
+    \zref@extract 
+      { cus@pageinfo@chapter\the\numexpr #1 + \@ne }
+      { cus@shipoutcounter }
+    -
+    \zref@extract 
+      { cus@pageinfo@chapter\number #1 }
+      { cus@shipoutcounter }
+    \scan_stop:
+  }
+\cs_new_nopar:Npn \__cusdoc_chapter_distance:
+  { \__cusdoc_chapter_distance:n { \cus@readonlychapternum } }
+\cs_new_nopar:Npn \__cusdoc_chapter_usedpage:n #1
+  {
+    \exp:w
+    \exp_end_continue_f:w
+    \int_eval:w
+    \g_shipout_readonly_int + 1 -
+    \zref@extract 
+      { cus@pageinfo@chapter\number #1 }
+      { cus@shipoutcounter }
+    \scan_stop:
+  }
+\cs_new_nopar:Npn \__cusdoc_chapter_usedpage:
+  { \__cusdoc_chapter_usedpage:n { \cus@readonlychapternum } }
+
+\ExplSyntaxOff
+
+
+\makeatother
