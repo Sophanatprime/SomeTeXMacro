@@ -5,4 +5,10 @@
 
 可以方便的应用于页眉、页脚中。颜色、形状、文字都可以修改。
 
+<img width="600" alt="屏幕截图 2022-03-26 152531" src="https://user-images.githubusercontent.com/55335597/160234667-531bff31-2dd1-4404-9a07-05c66210ec35.png">
+
+<img width="600" alt="屏幕截图 2022-03-26 152710" src="https://user-images.githubusercontent.com/55335597/160234676-6619b734-9191-412b-9d83-fa90080a86d6.png">
+
+---
+
 LICENSE: LPPL 1.3c
