@@ -156,13 +156,13 @@ color(75bp)=(pgftransparent!100); color(100bp)=(pgftransparent!100)}
   ys/frame/unbroken/.style={
     interior code={%
       \ys@frame@unbrokenouter % 外框
-      \foreach \ii/\jj/\kk in \ys@frame@star@list {\ys@frame@star{\ii}{\jj}{\kk}}; % 星
+      \foreach \ii/\jj/\kk in \ys@frame@star@list {\ys@frame@star{\ii}{\jj}{\kk}} % 星
       \ys@frame@unbrokeninner % 内线
       \ys@frame@unbrokencorner % 四角
     },
     interior titled code={%
       \ys@frame@unbrokenouter % 外框
-      \foreach \ii/\jj/\kk in \ys@frame@star@list {\ys@frame@star{\ii}{\jj}{\kk}}; % 星
+      \foreach \ii/\jj/\kk in \ys@frame@star@list {\ys@frame@star{\ii}{\jj}{\kk}} % 星
       \ys@frame@unbrokeninner % 内线
       \ys@frame@unbrokencorner % 四角
     }
@@ -170,12 +170,12 @@ color(75bp)=(pgftransparent!100); color(100bp)=(pgftransparent!100)}
   ys/frame/first/.style={
     interior code={%
       \ys@frame@firstouter
-      \foreach \ii/\jj/\kk in \ys@frame@star@list@t {\ys@frame@star{\ii}{\jj}{\kk}};
+      \foreach \ii/\jj/\kk in \ys@frame@star@list@t {\ys@frame@star{\ii}{\jj}{\kk}}
       \ys@frame@firstinner
       \ys@frame@firstcorner},
     interior titled code={%
       \ys@frame@firstouter
-      \foreach \ii/\jj/\kk in \ys@frame@star@list@t {\ys@frame@star{\ii}{\jj}{\kk}};
+      \foreach \ii/\jj/\kk in \ys@frame@star@list@t {\ys@frame@star{\ii}{\jj}{\kk}}
       \ys@frame@firstinner
       \ys@frame@firstcorner},
   },
@@ -188,7 +188,7 @@ color(75bp)=(pgftransparent!100); color(100bp)=(pgftransparent!100)}
   ys/frame/last/.style={
     interior code={%
       \ys@frame@lastouter
-      \foreach \ii/\jj/\kk in \ys@frame@star@list@b {\ys@frame@star{\ii}{\jj}{\kk}};
+      \foreach \ii/\jj/\kk in \ys@frame@star@list@b {\ys@frame@star{\ii}{\jj}{\kk}}
       \ys@frame@lastinner
       \ys@frame@lastcorner}
   },
