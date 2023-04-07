@@ -1,8 +1,9 @@
-\definecolor{framegolden}{HTML}{FFA500} % 控制外框颜色
-\definecolor{framegray}{HTML}{302E22} % 控制填充颜色
+\definecolor{framegolden}{HTML}{455a64} % 控制外框颜色
+\definecolor{framegray}{HTML}{e0e0e0} % 控制填充颜色
 \newdimen\ys@frame@linewidth
 \newdimen\ys@frame@radius
 \newdimen\ys@frame@sep
+\def\ys@frame@fill@opacity{0.2}
 
 \pgfdeclarehorizontalshading{ys@fade@circle}{500bp}
 {color(0bp)=(pgftransparent!100); color(25bp)=(pgftransparent!100);
@@ -27,8 +28,14 @@ color(75bp)=(pgftransparent!100); color(100bp)=(pgftransparent!100)}
 \edef\ys@frame@star@list{\ys@frame@star@list@t,\ys@frame@star@list@b}
 
 %region outer
+\def\ys@frame@remove@middleline#1#2{}
+\def\ys@frame@draw@middleline#1#2{%
+  \clip ([xshift=-\ys@frame@linewidth,#1]frame.north west)--
+        ([xshift=\ys@frame@linewidth,#1]frame.north east)--
+        ([xshift=\ys@frame@linewidth,#2]frame.south east)--
+        ([xshift=-\ys@frame@linewidth,#2]frame.south west)--cycle;}
 \def\ys@frame@unbrokenouter{%
-  \path[draw=framegolden,fill=framegray,fill opacity=.2,line width=\ys@frame@linewidth]
+  \path[draw=framegolden,fill=framegray,fill opacity=\ys@frame@fill@opacity,line width=\ys@frame@linewidth]
     ([xshift=\ys@frame@radius]frame.north west)--([xshift=-\ys@frame@radius]frame.north east) 
     arc(-180:-90:\ys@frame@radius)--
     ([yshift=-\ys@frame@radius]frame.north east)--([yshift=\ys@frame@radius]frame.south east)
@@ -38,7 +45,8 @@ color(75bp)=(pgftransparent!100); color(100bp)=(pgftransparent!100)}
     ([yshift=\ys@frame@radius]frame.south west)--([yshift=-\ys@frame@radius]frame.north west)
     arc(-90:0:\ys@frame@radius)--cycle;}
 \def\ys@frame@firstouter{%
-  \path[draw=framegolden,fill=framegray,fill opacity=.2,line width=\ys@frame@linewidth]
+  \ys@frame@remove@middleline{yshift=.5\ys@frame@linewidth}{yshift=.7\ys@frame@linewidth}%
+  \path[draw=framegolden,fill=framegray,fill opacity=\ys@frame@fill@opacity,line width=\ys@frame@linewidth]
     ([xshift=\ys@frame@radius]frame.north west)--([xshift=-\ys@frame@radius]frame.north east) 
     arc(-180:-90:\ys@frame@radius)--
     ([yshift=-\ys@frame@radius]frame.north east)--
@@ -47,11 +55,13 @@ color(75bp)=(pgftransparent!100); color(100bp)=(pgftransparent!100)}
     ([yshift=-\ys@frame@radius]frame.north west)
     arc(-90:0:\ys@frame@radius)--cycle;}
 \def\ys@frame@middleouter{%
-  \path[draw=framegolden,fill=framegray,fill opacity=.2,line width=\ys@frame@linewidth]
+  \ys@frame@remove@middleline{yshift=-.7\ys@frame@linewidth}{yshift=.7\ys@frame@linewidth}%
+  \path[draw=framegolden,fill=framegray,fill opacity=\ys@frame@fill@opacity,line width=\ys@frame@linewidth]
     (frame.north west)--(frame.north east)--(frame.south east)--
     (frame.south west)--cycle;}
 \def\ys@frame@lastouter{%
-  \path[draw=framegolden,fill=framegray,fill opacity=.2,line width=\ys@frame@linewidth]
+  \ys@frame@remove@middleline{yshift=-.7\ys@frame@linewidth}{yshift=-.5\ys@frame@linewidth}%
+  \path[draw=framegolden,fill=framegray,fill opacity=\ys@frame@fill@opacity,line width=\ys@frame@linewidth]
     (frame.north west)--(frame.north east)--
     ([yshift=\ys@frame@radius]frame.south east)
     arc(90:180:\ys@frame@radius)--
@@ -145,6 +155,10 @@ color(75bp)=(pgftransparent!100); color(100bp)=(pgftransparent!100)}
     ([xshift=-5\ys@frame@radius]segmentation.east);}
 
 \tcbset{
+  % 控制是否在断点处的线不画出来
+  ys/frame/not at break/.code=\let\ys@frame@remove@middleline\ys@frame@draw@middleline,
+  ys/frame/fill opacity/.store in=\ys@frame@fill@opacity,
+  ys/frame/draw at break/.code=\let\ys@frame@remove@middleline\@gobbletwo,
   % 控制线宽
   ys/frame/line width/.code={\pgfmathsetlength\ys@frame@linewidth{#1}},
   ys/frame/line width=1.4pt,
