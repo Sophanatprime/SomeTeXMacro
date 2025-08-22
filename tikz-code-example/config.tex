@@ -1,0 +1,187 @@
+\usepackage{texhigh}
+\usepackage{verbatim}
+\usepackage{calc,varwidth}
+
+\makeatletter
+\newdimen\@tempdimd
+\usepackage{longfbox} % can be replaced with tcolorbox
+% you can change it to tcolorbox environment
+% \def\my@long@pic{\put(\optionunit{/fbox/@border-box-width},\optionunit{/fbox/@border-box-height}){{\color{black}{\rotatebox{270}{\fbox{Ex.}}}}}}
+\providecommand\my@long@colorbox[3]{\begin{longfbox}[{breakable,border-style=none,background-color=#1,#2}]#3\par\nointerlineskip\end{longfbox}}
+
+\newbox\my@graphic@box
+\newbox\my@code@box
+\newdimen\my@code@width
+\ExplSyntaxOn
+\def\my@save@lines#1{%
+  \@bsphack \begingroup
+  \iow_open:Nn \g_tmpa_iow {#1}
+  \let\do\@makeother\dospecials
+  \catcode`\^^M\active
+  \def\verbatim@processline{\iow_now:NV \g_tmpa_iow \verbatim@line}%
+  \verbatim@start
+}
+\def\my@endsave@lines{\iow_close:N \g_tmpa_iow \endgroup\@esphack}
+\NewDocumentCommand \my@needbreak { m }
+  {
+    \par \penalty-100\begingroup
+    \setlength{\dimen@}{#1+10pt}
+    \dimen@ii\pagegoal \advance\dimen@ii-\pagetotal
+    \dim_compare:nNnTF \dimen@ > \dimen@ii
+      { \endgroup \use_i:nn }
+      { \endgroup \use_ii:nn }
+  }
+\cs_new:Npn \my@setactivespace { \char_set_active_eq:NN \  }
+\ExplSyntaxOff
+
+\def\my@build@graphics#1{%
+  \setbox\my@graphic@box\hbox{\input{#1}}
+}
+
+\texhighdefstyle[high]{tikz linenos}
+  {linenos, left-space=#1+4mm, line-number-space=#1+2mm, line-number-format={\scriptsize\color{black!50}##1}}
+\texhighdefstyle[high]{every high tikz}
+  {config-file=./texhigh.tikz.cfg, use-ctab=latex, font=\small\ttfamily, first-line-number=1, line-number-pos=left, output=#1.high,}
+\texhighdefstyle[high]{every high tikz kv}
+  {config-file=./texhigh.tikz-kv.cfg, use-ctab=latex, font=\small\ttfamily, output=,}
+\def\my@build@codefile#1#2{%
+  \@ifundefined{my@high@code}{\edef\my@high@code{\unexpanded{\texhighfile[every high tikz={#2},#1]{#2}}}}{}%
+  \setbox\my@code@box\hbox{\varwidth[b]{\my@code@width}\my@high@code\endvarwidth}}
+
+\def\my@topalign#1#2#3{%
+  \hbox{\vbox to#1{\hbox to\dimexpr#2{#3}\vss}}%
+}
+\def\my@setmax@box#1{\@tempdima=\dimexpr\ht\my@graphic@box+\dp\my@graphic@box\relax
+  \@tempdimb=\dimexpr\ht\my@code@box+\dp\my@code@box\relax
+  \ifdim\@tempdima<\@tempdimb #1\dimexpr\@tempdimb+2\fboxsep\relax
+  \else #1\dimexpr\@tempdima+2\fboxsep\relax \fi}
+\def\my@totalwidth{\dimexpr\wd\my@graphic@box+\wd\my@code@box+4\fboxsep+2mm\relax}
+\def\my@print{{\hbadness\@M \my@setmax@box\@tempdimd
+  \my@needbreak{\@tempdimd}{%
+    % if need page break
+    \ifdim\wd\my@graphic@box<.6\linewidth
+      \setlength{\my@code@width}{\linewidth-2mm-\wd\my@graphic@box-4\fboxsep}%
+      \my@build@codefile{}{}\my@setmax@box\@tempdimd
+      \ifdim\my@totalwidth>\linewidth
+        \my@needbreak{\@tempdimd}{\my@print@normal}{\my@print@may@sidebyside}%
+      \else \my@print@normal\fi
+    \else \my@print@normal
+    \fi
+  }{\ifdim\my@totalwidth>\linewidth
+      \ifdim\wd\my@graphic@box<.6\linewidth
+        \setlength{\my@code@width}{\linewidth-2mm-\wd\my@graphic@box-4\fboxsep}%
+        \my@build@codefile{}{}\my@setmax@box\@tempdimd
+        \ifdim\my@totalwidth<\linewidth
+          \my@needbreak{\@tempdimd}{\my@print@normal}{\my@print@may@sidebyside}%
+        \else \my@print@normal\fi
+      \else\my@print@normal\fi
+    \else\my@print@may@sidebyside\fi}%
+}}
+\def\my@print@normal{\hbox{\colorbox{graphicbackground}{\unhbox\my@graphic@box}}%
+  \smallskip \my@long@colorbox{codebackground}{}{\my@high@code}}
+\def\my@print@may@sidebyside{\def\x{\my@print@sidebyside}%
+  \ifdim\dimexpr\ht\my@graphic@box+\dp\my@graphic@box<1cm\relax
+    \ifdim\wd\my@graphic@box>.2\linewidth
+      \ifdim\dimexpr\ht\my@code@box+\dp\my@code@box>2cm\relax
+        \def\x{\my@print@normal}%
+      \fi
+    \fi
+  \fi \x
+}
+\def\my@print@sidebyside{\hbox to\linewidth{\boxmaxdepth\z@ \hfil
+  \my@setactivespace\textvisiblespace
+  \setbox\my@graphic@box\hbox{\unhbox\my@graphic@box}%
+  \setbox\my@code@box\hbox{\unhbox\my@code@box}%
+  \ifdim\dimexpr\my@totalwidth-\wd\my@code@box+12cm>\linewidth
+    \setlength{\my@code@width}{\linewidth-2mm-\wd\my@graphic@box-4\fboxsep}\fi
+  \@tempdima=\dimexpr\ht\my@graphic@box+\dp\my@graphic@box\relax
+  \@tempdimb=\dimexpr\ht\my@code@box+\dp\my@code@box\relax
+  \ifdim\@tempdima<\@tempdimb \@tempdimd\dimexpr\@tempdimb+2\fboxsep\relax
+  \else \@tempdimd\dimexpr\@tempdima+2\fboxsep\relax \fi
+  \my@topalign\@tempdimd{\wd\my@graphic@box+2\fboxsep}{\colorbox{graphicbackground}{\unhbox\my@graphic@box}}\hskip 2mm
+  \my@topalign\@tempdimd{\my@code@width+2\fboxsep}{\colorbox{codebackground}{\makebox[\my@code@width][l]{\unhbox\my@code@box}}}}}
+
+\ExplSyntaxOn
+\NewDocumentCommand \my@bracket@process {+v}
+  {{\THcolor[HTML]{858585}[}\my@bracket@process@{#1}{\THcolor[HTML]{858585}]}}
+\cs_new:Npn \my@bracket@process@ #1
+  {
+    \tl_set:Nn \l_tmpa_tl {#1}
+    \tl_replace_all:Nnn \l_tmpa_tl { \obeyedline } { ^^J }
+    \use:e
+      {
+        \texhightext
+        \exp_not:n { [ every~high~tikz~kv, before=\my@set@midline@break] }
+        { \exp_not:o \l_tmpa_tl }
+    }
+  }
+\cs_new_protected:Npn \my@set@midline@break
+  {
+    \cs_set_protected:Npn \THle
+      { \peek_N_type:T { \__my_midline_check:N } }
+  }
+\cs_new:Npn \__my_midline_check:N #1
+  { \tl_if_eq:nnTF {#1} { \THls } { \TH@breakline } {#1} }
+% \cs_new:Npn \my@test@key #1 #2
+%   {
+%     \group_begin:
+%     \tl_set:Ne \l_tmpa_tl { \tl_item:nn {#2} { -1 } }
+%     \tl_if_eq:nVTF {#1} \l_tmpa_tl
+%       { \exp_args:Ne \my@test@key@ { \tl_range:nnn {#2} { 1 } { -2 } } \l_tmpa_tl }
+%       { \my@test@key@ {#2} }
+%     \group_end:
+%   }
+% \cs_new:Npn \my@test@key@ #1
+%   {
+%     \bool_case:nF
+%       {
+%         { \cs_if_exist_p:c { pgfk@ /tikz/#1/.@cmd } } { [#1] }
+%         { \cs_if_exist_p:c { pgfk@ /tikz/#1 } }       { [#1] }
+%         { \cs_if_exist_p:c { pgfk@ /pgf/#1/.@cmd } }  { (#1) }
+%         { \cs_if_exist_p:c { pgfk@ /pgf/#1 } }        { (#1) }
+%       }
+%       { #1 }
+%   }
+\ExplSyntaxOff
+\THSaveStyle{tikz}{%
+  \THSetClassCS{pgfcs}{{\THcolor[HTML]{0000b2}\texhigh@underline{#1#2}}}%
+  \THSetClassCS{tikzcs}{{\THcolor[HTML]{0000b2}\bfseries#1#2}}%
+  \THSetClassCS{tkzcs}{{\THcolor[HTML]{0000b2}#1#2}}%
+  \THSetClassRS{tikzkeywords}{\begingroup\bfseries}%
+  \THSetClassRE{tikzkeywords}{\endgroup}%
+  \THSetClassES{bracket[]}{\begingroup\THcolor[HTML]{007f00}%
+    \@texhigh@reset@ctab\my@bracket@process}%
+  \THSetClassEE{bracket[]}{\endgroup}%
+  \THSetClassRS{paren()}{\begingroup\THcolor[HTML]{7f007f}}%
+  \THSetClassRE{paren()}{\endgroup}%
+  \THSetClassRS{key}{\begingroup
+    \THSetClassCH{,}{{\mdseries\upshape ##1}}%
+    \THSetClassRS{argument.1}{\bfseries}%
+    % \THSetClassRS{argument.1}{\bfseries
+    %   \texhigh@collect@range{\my@test@key,{####2}\THre{argument.1}}%
+    %   \THrs{argument.1}}%
+    \THSetClassRE{argument.1}{}%
+  }%
+  \THSetClassRE{key}{\endgroup}%
+  \THSetClassRS{key=value}{\begingroup
+    \THSetClassCH{,}{{\mdseries\upshape ##1}}%
+    \THSetClassCH{=}{{\mdseries\upshape ##1}}%
+    \THSetClassRS{argument.1}{\begingroup\bfseries}%
+    % \THSetClassRS{argument.1}{\begingroup\bfseries
+    %   \texhigh@collect@range{\my@test@key={####2}\THre{argument.1}}%
+    %   \THrs{argument.1}}%
+    \THSetClassRE{argument.1}{\endgroup}%
+    \THSetClassRS{argument.2}{\begingroup\slshape}%
+    \THSetClassRE{argument.2}{\endgroup}%
+  }%
+  \THSetClassRE{key=value}{\endgroup}%
+}
+\THUseSavedStyle{tikz}
+
+\NewDocumentEnvironment{codeexample}{!O{}}
+  {\par\nointerlineskip\medskip \my@save@lines{\jobname.tikz}}
+  {\my@endsave@lines \my@build@graphics{\jobname.tikz}%
+    \my@code@width=12cm \my@build@codefile{#1}{\jobname.tikz}%
+    \my@print \par\nointerlineskip\medskip}
+
+\makeatother

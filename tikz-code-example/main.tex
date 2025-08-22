@@ -1,0 +1,79 @@
+%!TEX program=xelatex
+%!TEX options=-shell-escape -synctex=1 -interaction=nonstopmode -file-line-error %DOC%
+\documentclass{article}
+\usepackage[a4paper,hmargin=2cm,vmargin=2.2cm]{geometry}
+\usepackage{xcolor}
+\definecolor{graphicbackground}{HTML}{f4f4cc}
+\definecolor{codebackground}{HTML}{e5e5ff}
+\usepackage{tikz}
+\usepackage{tkz-euclide}
+\usepackage{ctex}
+
+\input{config.tex}
+
+\begin{document}
+
+\begin{codeexample}
+\begin{tikzpicture}
+  \filldraw [gray] (0,0) circle [radius=2pt]
+                   (1,1) circle [radius=2pt]
+                   (2,1) circle [radius=2pt]
+                   (2,0) circle [radius=2pt];
+  \draw (0,0) .. controls (1,1) and (2,1) .. (2,0);
+  \node[draw, circle, inner sep=2pt, pin={60:$A$}] at (2,1) {};
+\end{tikzpicture}
+\end{codeexample}
+
+\begin{codeexample}
+\begin{tikzpicture}[scale=2]
+  \draw[step=.5cm,gray,very thin] (-1.4,-1.4) grid (1.4,1.4);
+  \draw (-1.5,0) -- (1.5,0);
+  \draw (0,-1.5) -- (0,1.5);
+  \draw (0,0) circle [radius=1cm];
+  \draw (3mm,0mm) arc [start angle=0, end angle=30, radius=3mm];
+\end{tikzpicture}
+\end{codeexample}
+
+\begin{codeexample}
+\begin{tikzpicture}
+  % https://ask.latexstudio.net/ask/question/17889.html @70550
+  \tkzDefPoints{0/0/A, 1.5/0.25/B, 1/1/C}
+  \tkzDrawPoints(A,B,C)
+  \tkzLabelPoints(A,B,C) 
+  \tkzDrawSegments[thick](A,B A,C)
+  %计算|AB|的长度
+  \tkzCalcLength(A,B)
+  \tkzGetLength{dAB}
+  %从C点反向延长距离为\dAB的长度
+  \tkzDefPointWith[linear normed,K=-\dAB](C,A)
+  \tkzGetPoint{D}
+  \tkzDrawSegment[magenta,semithick](A,D)
+  \tkzDrawPoints[magenta](D)
+  \tkzLabelPoints[magenta](D)
+  \tkzDrawSegment[dim={\pgfmathprintnumber\dAB,6pt,}](C,D)
+\end{tikzpicture}
+\end{codeexample}
+
+\noindent\makebox[\linewidth]{\fbox{\parbox[c][3cm][c]{.618\linewidth}{\centering intended blank}}}
+
+\begin{codeexample}[tikz linenos]
+\begin{tikzpicture}
+  % https://ask.latexstudio.net/ask/question/17889.html @70550
+  \tkzDefPoints{0/0/A, 2/0/B} 
+  \tkzDrawPoints(A,B)
+  \tkzDrawSegment[-Stealth](A,B)
+  \tkzDefPointWith[linear,K=1.5](A,B)
+  \tkzGetPoint{C}
+  \tkzDefPointWith[linear,K=.75](A,B)
+  \tkzGetPoint{D}
+  \tkzDefPointWith[linear,K=-.5](A,B)
+  \tkzGetPoint{E}
+  \tkzDrawPoints[violet](C) % 1.5
+  \tkzDrawPoints[cyan](D) % .75
+  \tkzDrawPoints[olive](E)% -.5
+  \tkzLabelPoints[above](A,B,C,D,E)
+  \tkzDrawLine[gray,dashed,add=1 and 1](A,B)
+\end{tikzpicture}
+\end{codeexample}
+
+\end{document}
