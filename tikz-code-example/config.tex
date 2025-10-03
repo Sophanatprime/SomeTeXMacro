@@ -111,17 +111,17 @@
     \use:e
       {
         \texhightext
-        \exp_not:n { [ every~high~tikz~kv, before=\my@set@midline@break] }
+        \exp_not:n { [ every~high~tikz~kv, line-kind=enhanced, before=\my@process@kv] }
         { \exp_not:o \l_tmpa_tl }
     }
   }
-\cs_new_protected:Npn \my@set@midline@break
+\cs_new_protected:Npn \my@process@kv
   {
-    \cs_set_protected:Npn \THle
-      { \peek_N_type:T { \__my_midline_check:N } }
+    \AssignSocketPlug{texhigh/start-line}{noop}
+    \AssignSocketPlug{texhigh/between-line}{between-break}
+    \AssignSocketPlug{texhigh/end-line}{noop}
   }
-\cs_new:Npn \__my_midline_check:N #1
-  { \tl_if_eq:nnTF {#1} { \THls } { \TH@breakline } {#1} }
+\NewSocketPlug { texhigh/between-line } { between-break } { \TH@breakline }
 % \cs_new:Npn \my@test@key #1 #2
 %   {
 %     \group_begin:
@@ -144,37 +144,37 @@
 %   }
 \ExplSyntaxOff
 \THSaveStyle{tikz}{%
-  \THSetClassCS{pgfcs}{{\THcolor[HTML]{0000b2}\texhigh@underline{#1#2}}}%
-  \THSetClassCS{tikzcs}{{\THcolor[HTML]{0000b2}\bfseries#1#2}}%
-  \THSetClassCS{tkzcs}{{\THcolor[HTML]{0000b2}#1#2}}%
-  \THSetClassRS{tikzkeywords}{\begingroup\bfseries}%
-  \THSetClassRE{tikzkeywords}{\endgroup}%
-  \THSetClassES{bracket[]}{\begingroup\THcolor[HTML]{007f00}%
+  \THSetCS{pgfcs}{{\THcolor[HTML]{0000b2}\texhigh@underline{#1#2}}}%
+  \THSetCS{tikzcs}{{\THcolor[HTML]{0000b2}\bfseries#1#2}}%
+  \THSetCS{tkzcs}{{\THcolor[HTML]{0000b2}#1#2}}%
+  \THSetRS{tikzkeywords}{\begingroup\bfseries}%
+  \THSetRE{tikzkeywords}{\endgroup}%
+  \THSetES{bracket[]}{\begingroup\THcolor[HTML]{007f00}%
     \@texhigh@reset@ctab\my@bracket@process}%
-  \THSetClassEE{bracket[]}{\endgroup}%
-  \THSetClassRS{paren()}{\begingroup\THcolor[HTML]{7f007f}}%
-  \THSetClassRE{paren()}{\endgroup}%
-  \THSetClassRS{key}{\begingroup
-    \THSetClassCH{,}{{\mdseries\upshape ##1}}%
-    \THSetClassRS{argument.1}{\bfseries}%
-    % \THSetClassRS{argument.1}{\bfseries
+  \THSetEE{bracket[]}{\endgroup}%
+  \THSetRS{paren()}{\begingroup\THcolor[HTML]{7f007f}}%
+  \THSetRE{paren()}{\endgroup}%
+  \THSetRS{key}{\begingroup
+    \THSetCH{,}{{\mdseries\upshape ##1}}%
+    \THSetRS{argument.1}{\bfseries}%
+    % \THSetRS{argument.1}{\bfseries
     %   \texhigh@collect@range{\my@test@key,{####2}\THre{argument.1}}%
     %   \THrs{argument.1}}%
-    \THSetClassRE{argument.1}{}%
+    \THSetRE{argument.1}{}%
   }%
-  \THSetClassRE{key}{\endgroup}%
-  \THSetClassRS{key=value}{\begingroup
-    \THSetClassCH{,}{{\mdseries\upshape ##1}}%
-    \THSetClassCH{=}{{\mdseries\upshape ##1}}%
-    \THSetClassRS{argument.1}{\begingroup\bfseries}%
-    % \THSetClassRS{argument.1}{\begingroup\bfseries
+  \THSetRE{key}{\endgroup}%
+  \THSetRS{key=value}{\begingroup
+    \THSetCH{,}{{\mdseries\upshape ##1}}%
+    \THSetCH{=}{{\mdseries\upshape ##1}}%
+    \THSetRS{argument.1}{\begingroup\bfseries}%
+    % \THSetRS{argument.1}{\begingroup\bfseries
     %   \texhigh@collect@range{\my@test@key={####2}\THre{argument.1}}%
     %   \THrs{argument.1}}%
-    \THSetClassRE{argument.1}{\endgroup}%
-    \THSetClassRS{argument.2}{\begingroup\slshape}%
-    \THSetClassRE{argument.2}{\endgroup}%
+    \THSetRE{argument.1}{\endgroup}%
+    \THSetRS{argument.2}{\begingroup\slshape}%
+    \THSetRE{argument.2}{\endgroup}%
   }%
-  \THSetClassRE{key=value}{\endgroup}%
+  \THSetRE{key=value}{\endgroup}%
 }
 \THUseSavedStyle{tikz}
 
